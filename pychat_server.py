@@ -8,7 +8,7 @@ from pychat_def import Lobby, Room, Client
 import pychat_def
 
 READ_BUFFER = 4096
-listen_sock = pychat_def.create_socket((socket.gethostname(),pychat_util.PORT))
+listen_sock = pychat_def.create_socket((socket.gethostname(),pychat_def.PORT))
 
 lobby = Lobby()
 connection_list = []
@@ -22,12 +22,13 @@ while True:
             new_client = Client(new_socket)
             connection_list.append(new_client)
             lobby.greet_new(new_client)
+            lobby.clients.append(new_client)
 
         else: # new message from a client
             msg = client.socket.recv(READ_BUFFER)
             if msg:
                 msg = msg.decode().lower()
-                lobby.handle-msg(client, msg)
+                lobby.handle_msg(client, msg)
             else:
                 client.socket.close()
                 connection_list.remove(client)
