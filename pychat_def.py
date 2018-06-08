@@ -31,6 +31,7 @@ class Lobby:
 
     def client_disconnect(self, source_client):
         msg = self.prefix + source_client.name + b' disconnected from the server\n'
+        print(msg.decode())
         for client in self.clients_list:
             if not source_client:
                 client.socket.sendall(msg)
@@ -59,11 +60,11 @@ class Lobby:
         return to_modify
 
     def handle_msg(self, source_client, msg):
-        parse = msg.split(' ',2) # [ command, argument1, msg ]
-
-        print(str(source_client.name) + ": " + msg) 
+        parse = msg.split() # [ command, argument1, msg ]
+        if(len(parse) == 0): return -1
+        print(source_client.name.decode() + ": " + msg, end='') 
         if ">>name" == parse[0]: # initial name set
-            print(source_client.name + b' is now ' + parse[1].encode())
+            print(source_client.name.decode() + " is now " + parse[1])
             source_client.set_name(parse[1])
             source_client.socket.sendall(self.prefix + b': For chat commands, use /help\n')
             msg = self.prefix + source_client.name + b' has joined the server!\n'
@@ -71,14 +72,14 @@ class Lobby:
                 if not source_client:
                     client.socket.sendall(msg)
 
-        elif "/nick" == parse[0]: # new client/user
-            source_client.name = parse[1].encode()
+#        elif "/nick" == parse[0]: # new name for themself
+#            source_client.set_name(
 
         elif "/rooms" == parse[0]: # list rooms available
             self.list_rooms(source_client)
         
         elif "/online" == parse[0]: # list online users in a room
-            if len(msg.split()) >= 2: 
+            if len(parse) >= 2: 
                 room_name = parse[1]
                 if(room_name in self.rooms):
                     self.rooms[room_name].list_clients(source_client)
@@ -86,13 +87,13 @@ class Lobby:
                     source_client.socket.sendall(self.prefix + b'That room doesn\'t exist\n')
             else: # list online users of lobby (which is the default server)
                 msg = self.prefix + b'Online users: '
-                for client in self.clients:
-                    msg += client.name.encode() + b', '
+                for client in self.clients_list:
+                    msg += client.name + b', '
                 source_client.socket.sendall(msg + b'\n')
 
 
         elif "/join" == parse[0]: # create or join existing room
-            if len(msg.split()) >= 2: #error check
+            if len(parse) >= 2: #error check
                 room_name = parse[1]
                 if (room_name in self.rooms) and (room_name in source_client.active_rooms):
                     source_client.socket.sendall(self.prefix + b': You are already in this room.\n')
@@ -112,7 +113,7 @@ class Lobby:
                 source_client.socket.sendall(self.prefix + b': No room name provided\n')
         
         elif "/leave" == parse[0]: # leave a room
-            if len(msg.split()) >= 2: # error check
+            if len(parse) >= 2: # error check
                     room_name = parse[1]
                     if (room_name in self.rooms) and (room_name in source_client.active_rooms):
                         self.rooms[room_name].client_leave(source_client)
@@ -129,8 +130,8 @@ class Lobby:
 
             source_client.socket.sendall(msg)
         
-        elif "/msg" == parse[0]: # send message to a specific room
-            if len(msg.split())>=2:
+        elif '/msg' == parse[0]: # send message to a specific room
+            if len(parse)>=2:
                 target = parse[1]
                 if not target in self.rooms:
                     source_client.socket.sendall(self.prefix + b': That room doesn\'t exist\n')
@@ -139,13 +140,13 @@ class Lobby:
                 else:
                     self.rooms[target].broadcast(source_client, msg.split(' ',2)[2])
 
-        elif "/w" == parse[0]: # whisper/private message to another client
-            if len(msg.split()) >= 2: 
+        elif '/w' == parse[0]: # whisper/private message to another client
+            if len(parse) >= 2: 
                 target = parse[1]
-                if target == source_client.name:
+                if target.encode() == source_client.name:
                     msg = self.prefix + b': You can\'t private message yourself\n'
                     source_client.socket.sendall(msg)
-                elif target in self.clients:
+                elif target in self.clients_list:
                     msg = source_client.prefix + msg.split(' ',2)[2]
                     self.clients[target].socket.sendall(msg)
                 else: # target doesn't exist
@@ -154,7 +155,7 @@ class Lobby:
                 msg = self.prefix + b': No target user provided --> /w [username] [message]\n'
                 source_client.socket.sendall(msg)
 
-        elif "/quit" == parse[0]: # client leaving the server
+        elif '/quit' == parse[0]: # client leaving the server
             source_client.socket.sendall(TERMINATE.encode())
             msg = self.prefix + b': ' + source_client.name + b' has left the server\n'
             for client in self.clients_list:
@@ -219,3 +220,5 @@ class Client:
     
     def fileno(self):
         return self.socket.fileno()
+
+
