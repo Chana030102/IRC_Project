@@ -4,11 +4,12 @@
 #
 
 import select, socket, sys, pdb
-from pychat_def import Lobby, Room, Client
-import pychat_def
+import pychat_util, pychat_lobby
+from pychat_util import Room, Client
+from pychat_lobby import Lobby
 
 READ_BUFFER = 4096
-listen_sock = pychat_def.create_socket((socket.gethostname(),pychat_def.PORT))
+listen_sock = pychat_util.create_socket((socket.gethostname(),pychat_util.PORT))
 
 lobby = Lobby()
 connection_list = []
