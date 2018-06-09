@@ -1,7 +1,9 @@
 # pychat_server.py
 #
+# Aaron Chan
+# CS494 (Spring 2018)
 #
-#
+# Starts server and establishes incoming client connections
 
 import select, socket, sys, pdb
 import pychat_util, pychat_lobby
@@ -23,8 +25,7 @@ while True:
             new_client = Client(new_socket)
             connection_list.append(new_client)
             lobby.greet_new(new_client)
-            lobby.add_client(new_client)
-#            lobby.clients_list.append(new_client)
+            lobby.clients_list.append(new_client)
 
         else: # new message from a client
             msg = client.socket.recv(READ_BUFFER)

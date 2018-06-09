@@ -3,7 +3,8 @@
 # Aaron Chan
 # CS494 (Spring 2018)
 # 
-#
+# Room and Client classes defined here
+
 import socket
 
 PORT = 5000
@@ -32,10 +33,10 @@ class Room:
             client.socket.sendall(msg)
 
     def broadcast(self, source_client, msg):
-#        msg = self.prefix + source_client.prefix + msg.encode()
-        for i in range(0,len(self.client_list)):
-            if not self.client_list[i] == source_client:
-                self.client_list[i].socket.sendall(msg.encode())
+       msg = self.prefix + source_client.prefix + msg.encode()
+       for i in range(0,len(self.client_list)):
+           if not self.client_list[i] == source_client:
+               self.client_list[i].socket.sendall(msg)
 
     def list_clients(self, source_client):
         if len(self.client_list) > 0:

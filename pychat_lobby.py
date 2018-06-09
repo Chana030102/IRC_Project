@@ -3,10 +3,21 @@
 # Aaron Chan
 # CS494 (Spring 2018)
 #
-# 
+# Lobby defined here. Handles rooms
+# and client messages.
+
 import socket, pychat_util
 from pychat_util import Room, Client
 
+instructions = b'Available Commands:\n'\
+              +b'/rooms - list of live chat rooms in the server\n'\
+              +b'/online - list of live users in the server\n'\
+              +b'/join room - create or join a live chat room\n'\
+              +b'/leave room - leave a chat room\n'\
+              +b'/msg room message - sends a message to the specified room\n'\
+              +b'/mmsg roomA,roomB,... message - sends a message to multiple rooms\n'\
+              +b'/help - show commands that can be used on this server\n'\
+              +b'/quit - leave the server\n'
 class Lobby:
     def __init__(self):
         self.rooms = {} # {room_name: Room}
@@ -16,16 +27,10 @@ class Lobby:
     def greet_new(self, client):
         client.socket.sendall(self.prefix + b': Welcome to the chat server.\nType your name:')
     
-    def add_client(self, client):
-        new_client = Client(client.socket)
-        self.clients_list.append(new_client)
-
     def client_disconnect(self, source_client):
         msg = self.prefix + source_client.name + b' disconnected from the server\n'
         print(msg.decode(), end='')
-        for client in self.clients_list:
-            if not source_client:
-                client.socket.sendall(msg)
+        self.broadcast(source_client,msg.decode())
         self.client_cleanup(source_client)
     
     def client_cleanup(self, source_client):
@@ -33,7 +38,7 @@ class Lobby:
             for room in source_client.active_rooms:
                 self.rooms[room].remove_client(source_client)
         self.clients_list.remove(source_client)
-    
+
     def broadcast(self, source_client, msg):
         for i in range(0,len(self.clients_list)):
             if not self.clients_list[i] == source_client:
@@ -120,7 +125,18 @@ class Lobby:
             else: msg = self.prefix + b': You need to specify a room. --> /leave [room_name]\n'
 
             source_client.socket.sendall(msg)
-        
+       
+        elif '/mmsg' == parse[0]:# message to multiple rooms --> /mmsg room1,room2,room3 msg
+            if len(parse)>=2:
+                target_list = parse[1].split(',')
+                for target in target_list:
+                    if not target in self.rooms:
+                        source_client.sockets.sendall(self.prefix + b': ' + target.encode() + b' doesn\'t exist\n')
+                    elif not target in source_client.active_rooms:
+                        source_client.sockets.sendall(self.prefix + b': You are not in ' + target.encode() + b'\n')
+                    else:
+                        self.rooms[target].broadcast(source_client, msg.split(' ',2)[2])
+
         elif '/msg' == parse[0]: # send message to a specific room
             if len(parse)>=2:
                 target = parse[1]
@@ -147,6 +163,9 @@ class Lobby:
             else: # no intended client provided
                 msg = self.prefix + b': No target user provided --> /w [username] [message]\n'
                 source_client.socket.sendall(msg)
+        
+        elif '/help' == parse[0]:
+            source_client.socket.sendall(instructions)
 
         elif '/quit' == parse[0]: # client leaving the server
             msg = self.prefix + b': ' + source_client.name + b' has left the server\n'
@@ -157,7 +176,5 @@ class Lobby:
             source_client.socket.sendall(pychat_util.TERMINATE.encode())
 
         else: # broadcast message to lobby
-            self.broadcast(source_client,msg)
-#            for i in range(0,len(self.clients_list)):
-#                if not self.clients_list[i] == source_client:
-#                    self.clients_list[i].socket.send(msg.encode())
+            msg = self.prefix + source_client.prefix + b': ' + msg.encode()
+            self.broadcast(source_client,msg.decode())

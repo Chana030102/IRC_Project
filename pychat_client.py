@@ -1,6 +1,6 @@
 # pychat_client.py
 #
-#
+# Connects to a server
 #
 import select, socket, sys
 import pychat_util, pychat_lobby
