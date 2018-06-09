@@ -33,10 +33,9 @@ class Room:
 
     def broadcast(self, source_client, msg):
 #        msg = self.prefix + source_client.prefix + msg.encode()
-        for client in self.client_list:
-            if not source_client:
-                client.socket.sendall(msg)
-#                client.socket.sendall(b'something was written\n')
+        for i in range(0,len(self.client_list)):
+            if not self.client_list[i] == source_client:
+                self.client_list[i].socket.sendall(msg.encode())
 
     def list_clients(self, source_client):
         if len(self.client_list) > 0:

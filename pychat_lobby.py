@@ -37,8 +37,7 @@ class Lobby:
     def broadcast(self, source_client, msg):
         for i in range(0,len(self.clients_list)):
             if not self.clients_list[i] == source_client:
-                self.clients_list[i].socket.send(msg.encode())
-        
+                self.clients_list[i].socket.sendall(msg.encode())
 
     def list_rooms(self, client):
         if len(self.rooms) == 0:
@@ -65,7 +64,7 @@ class Lobby:
             source_client.set_name(parse[1])
             source_client.socket.sendall(self.prefix + b': For chat commands, use /help\n')
             msg = self.prefix + source_client.name + b' has joined the server!\n'
-            self.broadcast(source_client,msg)
+            self.broadcast(source_client,msg.decode())
 
         elif "/rooms" == parse[0]: # list rooms available
             self.list_rooms(source_client)
