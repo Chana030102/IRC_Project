@@ -3,8 +3,9 @@
 #
 #
 import select, socket, sys
-from pychat_def import Lobby, Room, Client
-import pychat_def
+import pychat_util, pychat_lobby
+from pychat_util import Room, Client
+from pychat_lobby import Lobby
 
 READ_BUFFER = 4096
 
@@ -15,7 +16,7 @@ if len(sys.argv) < 2:
 else: 
     server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_connection.connect((sys.argv[1], pychat_def.PORT))
+    server_connection.connect((sys.argv[1], pychat_util.PORT))
 print("Connected to the server\n")
 msg_prefix = ''
 
@@ -33,7 +34,7 @@ while True:
                 print("Server down\n")
                 sys.exit(2)
             else:
-                if msg == pychat_def.TERMINATE.encode():
+                if msg == pychat_util.TERMINATE.encode():
                     sys.stdout.write('Good Bye\n')
                     sys.exit(2)
                 else:

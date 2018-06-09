@@ -15,6 +15,10 @@ class Lobby:
 
     def greet_new(self, client):
         client.socket.sendall(self.prefix + b': Welcome to the chat server.\nType your name:')
+    
+    def add_client(self, client):
+        new_client = Client(client.socket)
+        self.clients_list.append(new_client)
 
     def client_disconnect(self, source_client):
         msg = self.prefix + source_client.name + b' disconnected from the server\n'
@@ -29,6 +33,11 @@ class Lobby:
             for room in source_client.active_rooms:
                 self.rooms[room].remove_client(source_client)
         self.clients_list.remove(source_client)
+    
+    def broadcast(self, source_client, msg):
+        for i in range(0,len(self.clients_list)):
+            if not self.clients_list[i] == source_client:
+                self.clients_list[i].socket.send(msg.encode())
         
 
     def list_rooms(self, client):
@@ -49,16 +58,14 @@ class Lobby:
     def handle_msg(self, source_client, msg):
         parse = msg.split() # [ command, argument1, msg ]
         if(len(parse) == 0): return 
-
+        
         print(source_client.name.decode() + ": " + msg, end='') 
         if ">>name" == parse[0]: # initial name set
             print(source_client.name.decode() + " is now " + parse[1])
             source_client.set_name(parse[1])
             source_client.socket.sendall(self.prefix + b': For chat commands, use /help\n')
             msg = self.prefix + source_client.name + b' has joined the server!\n'
-            for client in self.clients_list:
-                if not source_client:
-                    client.socket.sendall(msg)
+            self.broadcast(source_client,msg)
 
         elif "/rooms" == parse[0]: # list rooms available
             self.list_rooms(source_client)
@@ -144,13 +151,14 @@ class Lobby:
 
         elif '/quit' == parse[0]: # client leaving the server
             msg = self.prefix + b': ' + source_client.name + b' has left the server\n'
+            self.broadcast(source_client,msg)
+#            for client in self.clients_list:
+#                if not source_client:
+#                    client.send_msg(msg)
             source_client.socket.sendall(pychat_util.TERMINATE.encode())
-            for client in self.clients_list:
-                if not source_client:
-                    client.send_msg(msg)
 
         else: # broadcast message to lobby
-#            to_send = self.prefix + source_client.prefix + msg.encode()
-            for client in self.clients_list:
-                if not source_client:
-                    client.send_msg(msg.encode())
+            self.broadcast(source_client,msg)
+#            for i in range(0,len(self.clients_list)):
+#                if not self.clients_list[i] == source_client:
+#                    self.clients_list[i].socket.send(msg.encode())

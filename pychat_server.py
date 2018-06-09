@@ -23,7 +23,8 @@ while True:
             new_client = Client(new_socket)
             connection_list.append(new_client)
             lobby.greet_new(new_client)
-            lobby.clients_list.append(new_client)
+            lobby.add_client(new_client)
+#            lobby.clients_list.append(new_client)
 
         else: # new message from a client
             msg = client.socket.recv(READ_BUFFER)
